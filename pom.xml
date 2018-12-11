@@ -9,7 +9,7 @@
     <version>0.0.1</version>
     <packaging>jar</packaging>
 
-    <name>http client</name>
+    <name>netty http client</name>
     <description>netty http client</description>
 
     <parent>
