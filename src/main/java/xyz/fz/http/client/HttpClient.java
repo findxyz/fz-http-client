@@ -11,8 +11,10 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.CharsetUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import xyz.fz.http.client.ssl.SSLEngineFactory;
 
+import javax.annotation.Resource;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 
 @Component
@@ -24,6 +26,12 @@ public class HttpClient {
     @Value("${http.server.port}")
     private int httpServerPort;
 
+    @Value("${ssl.enable}")
+    private boolean sslEnable;
+
+    @Resource
+    private SSLContext sslContext;
+
     public void start() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup(1);
         try {
@@ -34,7 +42,11 @@ public class HttpClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addFirst(new SslHandler(SSLEngineFactory.create()));
+                            if (sslEnable) {
+                                SSLEngine sslEngine = sslContext.createSSLEngine();
+                                sslEngine.setUseClientMode(true);
+                                ch.pipeline().addFirst(new SslHandler(sslEngine));
+                            }
                             ch.pipeline().addLast(new HttpClientCodec());
                             ch.pipeline().addLast(new HttpContentDecompressor());
                             ch.pipeline().addLast(new HttpObjectAggregator(64 * 1024));
